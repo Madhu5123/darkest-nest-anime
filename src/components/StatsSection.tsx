@@ -1,25 +1,26 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Building, Users, Award, Home } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const stats = [
   {
     label: 'Properties Managed',
-    value: 1500,
+    value: 998,
     icon: Building,
     suffix: '+',
     color: 'from-blue-500/20 to-blue-300/10'
   },
   {
     label: 'Happy Clients',
-    value: 950,
+    value: 27,
     icon: Users,
     suffix: '+',
     color: 'from-purple-500/20 to-purple-300/10'
   },
   {
     label: 'Years Experience',
-    value: 25,
+    value: 126,
     icon: Award,
     suffix: '+',
     color: 'from-amber-500/20 to-amber-300/10'
@@ -91,6 +92,14 @@ const StatsSection = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-background to-background z-0"></div>
       
       <div className="container mx-auto px-4 relative z-10">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-display font-semibold mb-2 text-gradient">Our Performance</h2>
+          <p className="text-white/70 max-w-2xl mx-auto">The numbers that define our success and experience in the real estate industry</p>
+          <div className="flex justify-center mt-4">
+            <Separator className="w-24 bg-gradient-to-r from-transparent via-white/30 to-transparent h-[1px]" />
+          </div>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {stats.map((stat, index) => (
             <div 
