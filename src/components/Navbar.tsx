@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Home, Building, InfoIcon, Phone } from 'lucide-react';
 import { Button } from './ui/button';
+import DesktopNavigation from './NavigationMenu';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -51,24 +52,20 @@ const Navbar = () => {
           <span className="font-display text-2xl font-semibold tracking-tight text-gradient">LuxEstate</span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex space-x-8 items-center">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`flex items-center text-sm font-medium transition-colors hover:text-white/90 ${
-                location.pathname === link.path
-                  ? 'text-white'
-                  : 'text-white/70'
-              }`}
-            >
-              {link.icon}
-              {link.name}
-            </Link>
-          ))}
+        {/* Desktop Navigation Menu from shadcn/ui */}
+        <DesktopNavigation />
+
+        {/* Action Buttons (Desktop) */}
+        <div className="hidden md:flex items-center space-x-4">
+          <Button 
+            asChild
+            variant="outline" 
+            className="border-white/20 text-white hover:bg-white/10"
+          >
+            <Link to="/login">Login</Link>
+          </Button>
           <Button className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white">
-            Get Started
+            <Link to="/register">Get Started</Link>
           </Button>
         </div>
 
@@ -103,9 +100,21 @@ const Navbar = () => {
               {link.name}
             </Link>
           ))}
-          <Button className="mt-4 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white">
-            Get Started
-          </Button>
+          <div className="flex flex-col space-y-4 mt-8 w-full max-w-xs">
+            <Button 
+              asChild
+              variant="outline" 
+              className="w-full border-white/20 text-white hover:bg-white/10"
+            >
+              <Link to="/login">Login</Link>
+            </Button>
+            <Button 
+              asChild
+              className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white"
+            >
+              <Link to="/register">Get Started</Link>
+            </Button>
+          </div>
         </div>
       </div>
     </header>

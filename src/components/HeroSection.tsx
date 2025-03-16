@@ -31,25 +31,27 @@ const HeroSection = () => {
       ref={heroRef}
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* Background 3D scene */}
-      <ThreeDScene />
+      {/* 3D Scene */}
+      <div className="absolute top-0 right-0 w-full md:w-1/2 h-full">
+        <ThreeDScene />
+      </div>
       
       {/* Overlay gradient for better text readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-background z-0"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-transparent z-0"></div>
       
       {/* Content container */}
-      <div className="container mx-auto px-4 z-10 text-center relative">
-        <div className={`transform transition-all duration-700 ${scrolled ? 'translate-y-[-20px] opacity-0' : 'translate-y-0 opacity-100'}`}>
+      <div className="container mx-auto px-4 z-10 relative">
+        <div className={`md:max-w-xl transform transition-all duration-700 ${scrolled ? 'translate-y-[-20px] opacity-0' : 'translate-y-0 opacity-100'}`}>
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-display font-semibold tracking-tight mb-4">
             <span className="text-gradient block mb-2">Discover</span> 
             <span className="block">Your Dream Property</span>
           </h1>
           
-          <p className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto mb-8">
+          <p className="text-white/80 text-lg md:text-xl max-w-2xl mb-8">
             Explore our exclusive collection of luxury properties designed for those who appreciate the finest living spaces.
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-start gap-4">
             <Button
               asChild
               size="lg" 

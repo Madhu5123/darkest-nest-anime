@@ -98,6 +98,8 @@ const ThreeDScene = ({ className = "" }: Props) => {
     addWindows(building2, 4, 2, 0.8);
     addWindows(building3, 5, 2, 0.7);
     
+    // Position the buildings towards the right side
+    buildingGroup.position.x = 2;
     scene.add(buildingGroup);
     
     // Add a circular platform
@@ -105,6 +107,7 @@ const ThreeDScene = ({ className = "" }: Props) => {
     const platformMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
     const platform = new THREE.Mesh(platformGeometry, platformMaterial);
     platform.position.y = -1.05;
+    platform.position.x = 2;
     scene.add(platform);
     
     // Lights

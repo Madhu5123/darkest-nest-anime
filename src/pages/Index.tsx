@@ -1,13 +1,18 @@
 
 import { Suspense } from 'react';
+import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
 import FeaturedProperties from '../components/FeaturedProperties';
 import CallToAction from '../components/CallToAction';
+import Footer from '../components/Footer';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+      {/* Navigation */}
+      <Navbar />
+      
       {/* Hero Section with 3D Background */}
       <Suspense fallback={<LoadingSkeleton />}>
         <HeroSection />
@@ -22,6 +27,9 @@ const Index = () => {
       <Suspense fallback={<LoadingSkeleton />}>
         <CallToAction />
       </Suspense>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
