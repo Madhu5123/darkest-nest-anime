@@ -8,6 +8,9 @@ import Testimonials from '../components/Testimonials';
 import CallToAction from '../components/CallToAction';
 import Footer from '../components/Footer';
 import { Skeleton } from '@/components/ui/skeleton';
+import FeaturesSection from '../components/FeaturesSection';
+import PartnersSection from '../components/PartnersSection';
+import ProcessSection from '../components/ProcessSection';
 
 const Index = () => {
   return (
@@ -25,14 +28,29 @@ const Index = () => {
         <StatsSection />
       </Suspense>
       
+      {/* Features Section */}
+      <Suspense fallback={<LoadingSkeleton />}>
+        <FeaturesSection />
+      </Suspense>
+      
       {/* Featured Properties Section */}
       <Suspense fallback={<LoadingSkeleton />}>
         <FeaturedProperties />
       </Suspense>
       
+      {/* Process Section */}
+      <Suspense fallback={<LoadingSkeleton />}>
+        <ProcessSection />
+      </Suspense>
+      
       {/* Testimonials Section */}
       <Suspense fallback={<LoadingSkeleton />}>
         <Testimonials />
+      </Suspense>
+      
+      {/* Partners Section */}
+      <Suspense fallback={<LoadingSkeleton />}>
+        <PartnersSection />
       </Suspense>
       
       {/* Call to Action Section */}
