@@ -3,6 +3,8 @@ import { Suspense } from 'react';
 import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
 import FeaturedProperties from '../components/FeaturedProperties';
+import StatsSection from '../components/StatsSection';
+import Testimonials from '../components/Testimonials';
 import CallToAction from '../components/CallToAction';
 import Footer from '../components/Footer';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,9 +20,19 @@ const Index = () => {
         <HeroSection />
       </Suspense>
       
+      {/* Stats Section */}
+      <Suspense fallback={<LoadingSkeleton />}>
+        <StatsSection />
+      </Suspense>
+      
       {/* Featured Properties Section */}
       <Suspense fallback={<LoadingSkeleton />}>
         <FeaturedProperties />
+      </Suspense>
+      
+      {/* Testimonials Section */}
+      <Suspense fallback={<LoadingSkeleton />}>
+        <Testimonials />
       </Suspense>
       
       {/* Call to Action Section */}
