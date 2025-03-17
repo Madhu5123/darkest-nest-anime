@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -11,7 +10,8 @@ import {
   Camera, 
   Paintbrush,
   Compass,
-  Key
+  Key,
+  CircleCheck
 } from 'lucide-react';
 
 const Services = () => {
@@ -130,13 +130,15 @@ const Services = () => {
                   onClick={() => setActiveTab(service.id)}
                   className={`p-4 rounded-lg text-center transition-all duration-300 ${
                     activeTab === service.id
-                      ? 'bg-primary text-white'
+                      ? 'bg-primary/20 border border-primary/50 shadow-md'
                       : 'bg-white/5 hover:bg-white/10'
                   }`}
                 >
                   <div className="flex flex-col items-center">
                     {service.icon}
-                    <span className="text-sm font-medium">{service.title}</span>
+                    <span className={`text-sm font-medium ${activeTab === service.id ? 'text-primary' : 'text-white/80'}`}>
+                      {service.title}
+                    </span>
                   </div>
                 </button>
               ))}
@@ -157,22 +159,9 @@ const Services = () => {
                   <h3 className="text-xl font-semibold mb-4">Key Features</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {activeService.features.map((feature, index) => (
-                      <div key={index} className="flex items-start p-3 glass-morphism rounded-lg">
+                      <div key={index} className="flex items-start p-3 glass-morphism rounded-lg hover:bg-white/10 transition-colors">
                         <div className="flex-shrink-0 mr-3 mt-1">
-                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="w-3 h-3 text-white"
-                            >
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          </div>
+                          <CircleCheck className="h-5 w-5 text-primary" />
                         </div>
                         <p className="text-white/90">{feature}</p>
                       </div>
