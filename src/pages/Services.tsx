@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { 
   Home, 
   BarChart, 
-  Buildings, 
+  Building, 
   FileText, 
   Camera, 
   Paintbrush,
@@ -21,7 +21,7 @@ const Services = () => {
     {
       id: 'property-management',
       title: 'Property Management',
-      icon: <Buildings className="w-10 h-10 mb-4 text-primary" />,
+      icon: <Building className="w-10 h-10 mb-4 text-primary" />,
       description: 'Our comprehensive property management services ensure your investment is maintained to the highest standards while maximizing returns.',
       features: [
         'Tenant acquisition and screening',
