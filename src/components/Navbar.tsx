@@ -44,7 +44,7 @@ const Navbar = () => {
   return (
     <header
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrolled ? 'glass-morphism py-2' : 'bg-transparent py-4'
+        scrolled ? 'bg-black py-2 shadow-lg' : 'bg-transparent py-4'
       }`}
     >
       <nav className="container mx-auto flex items-center justify-between px-4 md:px-8">

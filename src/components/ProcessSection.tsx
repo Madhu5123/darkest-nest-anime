@@ -101,7 +101,7 @@ const ProcessSection = () => {
               {steps.map((step, index) => (
                 <div 
                   key={step.id}
-                  className={`flex flex-col items-center transition-all duration-500 ${
+                  className={`flex flex-col items-center transition-all duration-500 px-2 ${
                     isVisible 
                       ? 'opacity-100 translate-y-0' 
                       : 'opacity-0 translate-y-8'
@@ -109,26 +109,26 @@ const ProcessSection = () => {
                   style={{ transitionDelay: `${index * 200}ms` }}
                 >
                   <div 
-                    className={`w-20 h-20 rounded-full flex items-center justify-center text-white transition-all duration-300 ${
+                    className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-white transition-all duration-300 ${
                       activeStep === index 
-                        ? `${step.color} scale-110 shadow-lg shadow-${step.color}/20` 
+                        ? `${step.color} scale-110 shadow-lg` 
                         : 'bg-white/10'
                     }`}
                   >
                     <step.icon 
-                      size={32} 
+                      size={28} 
                       className={`transition-all duration-300 ${
                         activeStep === index ? 'scale-110' : 'opacity-60'
                       }`}
                     />
                   </div>
-                  <div className="text-center mt-4 w-32">
-                    <h4 className={`font-semibold transition-all duration-300 ${
+                  <div className="text-center mt-4 w-full">
+                    <h4 className={`font-semibold text-sm md:text-base transition-all duration-300 ${
                       activeStep === index ? 'text-white' : 'text-white/70'
                     }`}>
                       {step.title}
                     </h4>
-                    <p className={`text-xs mt-1 transition-all duration-300 ${
+                    <p className={`text-xs mt-1 transition-all duration-300 hidden md:block ${
                       activeStep === index ? 'text-white/90' : 'text-white/50'
                     }`}>
                       Step {step.id}
@@ -140,10 +140,10 @@ const ProcessSection = () => {
           </div>
           
           {/* Current step details */}
-          <div className={`glass-morphism rounded-xl p-8 text-center max-w-2xl mx-auto transition-all duration-500 ${
+          <div className={`glass-morphism rounded-xl p-6 md:p-8 text-center max-w-2xl mx-auto transition-all duration-500 ${
             isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
           }`}>
-            <h3 className="text-2xl font-semibold mb-3">{steps[activeStep].title}</h3>
+            <h3 className="text-xl md:text-2xl font-semibold mb-3">{steps[activeStep].title}</h3>
             <p className="text-white/80">{steps[activeStep].description}</p>
           </div>
         </div>
