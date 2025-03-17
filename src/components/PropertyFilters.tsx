@@ -2,21 +2,19 @@
 import { useState } from 'react';
 import { Search, SlidersHorizontal, MapPin, X } from 'lucide-react';
 import { Button } from './ui/button';
-import { PropertyFilter } from '../types';
+import { FirebasePropertyFilter } from '../types';
 
 interface PropertyFiltersProps {
-  onFilterChange: (filters: PropertyFilter) => void;
+  onFilterChange: (filters: FirebasePropertyFilter) => void;
 }
 
 const PropertyFilters = ({ onFilterChange }: PropertyFiltersProps) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [filters, setFilters] = useState<PropertyFilter>({
+  const [filters, setFilters] = useState<FirebasePropertyFilter>({
     search: '',
     location: '',
     minPrice: '',
     maxPrice: '',
-    beds: '',
-    baths: '',
     propertyType: '',
   });
 
@@ -38,8 +36,6 @@ const PropertyFilters = ({ onFilterChange }: PropertyFiltersProps) => {
       location: '',
       minPrice: '',
       maxPrice: '',
-      beds: '',
-      baths: '',
       propertyType: '',
     };
     setFilters(resetFilters);
@@ -57,7 +53,7 @@ const PropertyFilters = ({ onFilterChange }: PropertyFiltersProps) => {
             name="search"
             value={filters.search}
             onChange={handleInputChange}
-            placeholder="Search properties by title, address, city..."
+            placeholder="Search properties by name, description..."
             className="pl-12 pr-4 py-3 w-full bg-transparent text-white focus:outline-none placeholder:text-white/50"
           />
           <Button
@@ -101,7 +97,7 @@ const PropertyFilters = ({ onFilterChange }: PropertyFiltersProps) => {
                   name="location"
                   value={filters.location}
                   onChange={handleInputChange}
-                  placeholder="City, State, Zip"
+                  placeholder="City, State, Location"
                   className="pl-10 py-2 px-3 w-full bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/30 transition-colors"
                 />
               </div>
@@ -109,7 +105,7 @@ const PropertyFilters = ({ onFilterChange }: PropertyFiltersProps) => {
 
             {/* Price Range */}
             <div className="space-y-2">
-              <label className="text-sm text-white/70">Price Range</label>
+              <label className="text-sm text-white/70">Price Range (₹)</label>
               <div className="flex space-x-2">
                 <input
                   type="text"
@@ -130,40 +126,8 @@ const PropertyFilters = ({ onFilterChange }: PropertyFiltersProps) => {
               </div>
             </div>
 
-            {/* Bedrooms & Bathrooms */}
-            <div className="space-y-2">
-              <label className="text-sm text-white/70">Beds & Baths</label>
-              <div className="flex space-x-2">
-                <select
-                  name="beds"
-                  value={filters.beds}
-                  onChange={handleInputChange}
-                  className="py-2 px-3 w-full bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/30 transition-colors appearance-none"
-                >
-                  <option value="">Beds</option>
-                  <option value="1">1+</option>
-                  <option value="2">2+</option>
-                  <option value="3">3+</option>
-                  <option value="4">4+</option>
-                  <option value="5">5+</option>
-                </select>
-                <select
-                  name="baths"
-                  value={filters.baths}
-                  onChange={handleInputChange}
-                  className="py-2 px-3 w-full bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/30 transition-colors appearance-none"
-                >
-                  <option value="">Baths</option>
-                  <option value="1">1+</option>
-                  <option value="2">2+</option>
-                  <option value="3">3+</option>
-                  <option value="4">4+</option>
-                </select>
-              </div>
-            </div>
-
             {/* Property Type */}
-            <div className="space-y-2 sm:col-span-2 lg:col-span-3">
+            <div className="space-y-2">
               <label className="text-sm text-white/70">Property Type</label>
               <select
                 name="propertyType"
@@ -172,12 +136,10 @@ const PropertyFilters = ({ onFilterChange }: PropertyFiltersProps) => {
                 className="py-2 px-3 w-full bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/30 transition-colors appearance-none"
               >
                 <option value="">All Property Types</option>
-                <option value="house">House</option>
-                <option value="apartment">Apartment</option>
-                <option value="condo">Condo</option>
-                <option value="townhouse">Townhouse</option>
-                <option value="villa">Villa</option>
-                <option value="land">Land</option>
+                <option value="Land">Land</option>
+                <option value="Agricultural">Agricultural</option>
+                <option value="Residential">Residential</option>
+                <option value="Commercial">Commercial</option>
               </select>
             </div>
           </div>

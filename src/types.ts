@@ -36,3 +36,31 @@ export interface PropertyFilter {
   baths: string;
   propertyType: string;
 }
+
+// Firebase property interface
+export interface FirebaseProperty {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  image_urls: string[];
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  area_points: {
+    latitude: number;
+    longitude: number;
+  }[];
+  email: string;
+  phone: string;
+  uploaded_at: string;
+}
+
+export interface FirebasePropertyFilter {
+  search: string;
+  location: string;
+  minPrice: string;
+  maxPrice: string;
+  propertyType: string;
+}
