@@ -1,84 +1,31 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PropertyCard from '@/components/PropertyCard';
 import PropertyFilters from '@/components/PropertyFilters';
 import { FirebaseProperty, FirebasePropertyFilter } from '@/types';
-import { mockProperties } from '@/data/properties';
+import { useFirebase } from '@/contexts/FirebaseContext';
 
 const Properties = () => {
-  const [properties, setProperties] = useState<FirebaseProperty[]>([]);
-  const [filteredProperties, setFilteredProperties] = useState<FirebaseProperty[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { getProperties } = useFirebase();
+  const [filters, setFilters] = useState<FirebasePropertyFilter>({
+    search: '',
+    location: '',
+    minPrice: '',
+    maxPrice: '',
+    propertyType: ''
+  });
 
-  useEffect(() => {
-    // Mock fetching data from Firebase
-    // In a real app, this would be an API call to your Firebase backend
-    setTimeout(() => {
-      // Convert mock properties to Firebase format for demonstration
-      const firebaseProps = mockProperties.map((p, index) => ({
-        id: p.id,
-        name: p.title,
-        description: p.description,
-        price: p.price.toString(),
-        image_urls: p.images,
-        location: {
-          latitude: p.location.coordinates?.lat || 13.146742 + (index * 0.001),
-          longitude: p.location.coordinates?.lng || 78.1357638 + (index * 0.001),
-        },
-        area_points: [
-          { latitude: 13.14688880681415, longitude: 78.13561622053385 },
-          { latitude: 13.146736663082857, longitude: 78.13557095825672 },
-          { latitude: 13.146719359176121, longitude: 78.1356581300497 },
-          { latitude: 13.14686170825948, longitude: 78.13571009784937 }
-        ],
-        email: "property@example.com",
-        phone: "1234567890",
-        uploaded_at: new Date().toISOString(),
-      }));
-      
-      setProperties(firebaseProps);
-      setFilteredProperties(firebaseProps);
-      setLoading(false);
-    }, 1000);
-  }, []);
+  // Fetch properties with React Query
+  const { data: properties = [], isLoading } = useQuery({
+    queryKey: ['properties', filters],
+    queryFn: () => getProperties(filters),
+  });
 
-  const handleFilterChange = (filters: FirebasePropertyFilter) => {
-    let filtered = [...properties];
-
-    // Filter by search term
-    if (filters.search) {
-      const searchTerm = filters.search.toLowerCase();
-      filtered = filtered.filter(
-        property =>
-          property.name.toLowerCase().includes(searchTerm) ||
-          property.description.toLowerCase().includes(searchTerm)
-      );
-    }
-
-    // Filter by location
-    if (filters.location) {
-      const locationTerm = filters.location.toLowerCase();
-      filtered = filtered.filter(
-        property => property.description.toLowerCase().includes(locationTerm)
-      );
-    }
-
-    // Filter by price range
-    if (filters.minPrice) {
-      filtered = filtered.filter(
-        property => parseInt(property.price) >= parseInt(filters.minPrice)
-      );
-    }
-
-    if (filters.maxPrice) {
-      filtered = filtered.filter(
-        property => parseInt(property.price) <= parseInt(filters.maxPrice)
-      );
-    }
-
-    setFilteredProperties(filtered);
+  const handleFilterChange = (newFilters: FirebasePropertyFilter) => {
+    setFilters(newFilters);
   };
 
   return (
@@ -94,13 +41,13 @@ const Properties = () => {
           
           <PropertyFilters onFilterChange={handleFilterChange} />
           
-          {loading ? (
+          {isLoading ? (
             <div className="flex justify-center">
               <div className="w-12 h-12 rounded-full border-2 border-t-transparent border-white animate-spin"></div>
             </div>
-          ) : filteredProperties.length > 0 ? (
+          ) : properties.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProperties.map((property, index) => (
+              {properties.map((property, index) => (
                 <PropertyCard 
                   key={property.id} 
                   property={{

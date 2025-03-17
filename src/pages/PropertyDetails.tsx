@@ -1,58 +1,23 @@
 
-import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PropertyDetailView from '@/components/PropertyDetailView';
-import { FirebaseProperty } from '@/types';
-import { mockProperties } from '@/data/properties';
+import { useFirebase } from '@/contexts/FirebaseContext';
 
 const PropertyDetails = () => {
-  const { id } = useParams<{ id: string }>();
-  const [property, setProperty] = useState<FirebaseProperty | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { id = '' } = useParams<{ id: string }>();
+  const { getPropertyById } = useFirebase();
 
-  useEffect(() => {
-    // In a real app, this would fetch from Firebase
-    // Simulating API call to fetch property details
-    setTimeout(() => {
-      // Find the mock property
-      const mockProperty = mockProperties.find(p => p.id === id);
-      
-      if (mockProperty) {
-        // Convert to Firebase format
-        const firebaseProperty: FirebaseProperty = {
-          id: mockProperty.id,
-          name: mockProperty.title,
-          description: mockProperty.description,
-          price: mockProperty.price.toString(),
-          image_urls: mockProperty.images,
-          location: {
-            latitude: mockProperty.location.coordinates?.lat || 13.146742,
-            longitude: mockProperty.location.coordinates?.lng || 78.1357638,
-          },
-          area_points: [
-            { latitude: 13.14688880681415, longitude: 78.13561622053385 },
-            { latitude: 13.146736663082857, longitude: 78.13557095825672 },
-            { latitude: 13.146719359176121, longitude: 78.1356581300497 },
-            { latitude: 13.14686170825948, longitude: 78.13571009784937 }
-          ],
-          email: "r.tejas@gmail.com",
-          phone: "6360991933",
-          uploaded_at: new Date().toISOString()
-        };
-        
-        setProperty(firebaseProperty);
-      }
-      
-      setLoading(false);
-    }, 800);
-    
-    // Scroll to top when viewing property details
-    window.scrollTo(0, 0);
-  }, [id]);
+  // Fetch property details with React Query
+  const { data: property, isLoading } = useQuery({
+    queryKey: ['property', id],
+    queryFn: () => getPropertyById(id),
+    enabled: !!id,
+  });
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-indigo-950 to-black">
         <Navbar />
