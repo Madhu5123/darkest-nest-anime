@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -36,7 +35,7 @@ const About = () => {
       name: 'James Wilson',
       role: 'Chief Marketing Officer',
       image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80',
-      bio: 'James brings his creative genius to LuxEstate's marketing strategies, ensuring our properties receive maximum exposure to the right audience.'
+      bio: 'James brings his creative genius to LuxEstate\'s marketing strategies, ensuring our properties receive maximum exposure to the right audience.'
     }
   ];
 
@@ -255,7 +254,7 @@ const About = () => {
               <div className="relative z-10">
                 <h2 className="text-2xl md:text-3xl font-semibold mb-4">Join Our Journey</h2>
                 <p className="text-white/70 max-w-2xl mx-auto mb-6">
-                  Whether you're looking to buy, sell, or invest in properties, our team is ready to provide
+                  Whether you&apos;re looking to buy, sell, or invest in properties, our team is ready to provide
                   you with expert guidance and support throughout your real estate journey.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
