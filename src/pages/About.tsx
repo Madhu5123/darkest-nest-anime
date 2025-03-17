@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -90,7 +91,7 @@ const About = () => {
     },
     {
       title: 'Client-Centric',
-      description: 'Our clients' needs and satisfaction are at the center of everything we do.',
+      description: 'Our clients\' needs and satisfaction are at the center of everything we do.',
       icon: <Users className="w-10 h-10 text-primary" />
     }
   ];
