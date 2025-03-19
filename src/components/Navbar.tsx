@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Building, InfoIcon, Phone } from 'lucide-react';
+import { Menu, X, Home, Building, InfoIcon, Phone, User, Heart } from 'lucide-react';
 import { Button } from './ui/button';
 import DesktopNavigation from './NavigationMenu';
 
@@ -39,6 +39,8 @@ const Navbar = () => {
     { name: 'Properties', path: '/properties', icon: <Building className="h-4 w-4 mr-2" /> },
     { name: 'About', path: '/about', icon: <InfoIcon className="h-4 w-4 mr-2" /> },
     { name: 'Contact', path: '/contact', icon: <Phone className="h-4 w-4 mr-2" /> },
+    { name: 'Favorites', path: '/favorites', icon: <Heart className="h-4 w-4 mr-2" /> },
+    { name: 'Profile', path: '/profile', icon: <User className="h-4 w-4 mr-2" /> },
   ];
 
   return (
@@ -57,6 +59,12 @@ const Navbar = () => {
 
         {/* Action Buttons (Desktop) */}
         <div className="hidden md:flex items-center space-x-4">
+          <Link to="/favorites" className="text-white/80 hover:text-white mr-2">
+            <Heart size={20} />
+          </Link>
+          <Link to="/profile" className="text-white/80 hover:text-white mr-4">
+            <User size={20} />
+          </Link>
           <Button 
             asChild
             variant="outline" 

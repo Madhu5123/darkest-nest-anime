@@ -1,10 +1,11 @@
-
 import { createContext, useContext, ReactNode } from 'react';
 import { db, storage, auth } from '@/lib/firebase';
 import { 
   collection, 
   getDocs, 
   getDoc, 
+  setDoc,
+  deleteDoc,
   doc, 
   query, 
   where, 
@@ -18,6 +19,10 @@ import { FirebaseProperty, FirebasePropertyFilter } from '@/types';
 type FirebaseContextType = {
   getProperties: (filters?: FirebasePropertyFilter) => Promise<FirebaseProperty[]>;
   getPropertyById: (id: string) => Promise<FirebaseProperty | null>;
+  auth: typeof auth;
+  getUserFavorites: (userId: string) => Promise<FirebaseProperty[]>;
+  addToFavorites: (userId: string, propertyId: string) => Promise<void>;
+  removeFromFavorites: (userId: string, propertyId: string) => Promise<void>;
 };
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -119,8 +124,109 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
+  // Function to get a user's favorite properties
+  const getUserFavorites = async (userId: string): Promise<FirebaseProperty[]> => {
+    try {
+      // Get user favorites document
+      const userFavoritesRef = doc(db, 'userFavorites', userId);
+      const userFavoritesSnap = await getDoc(userFavoritesRef);
+      
+      if (!userFavoritesSnap.exists()) {
+        return [];
+      }
+      
+      const favoritesData = userFavoritesSnap.data();
+      const favoriteIds = favoritesData.propertyIds || [];
+      
+      if (favoriteIds.length === 0) {
+        return [];
+      }
+      
+      // Fetch all favorite properties
+      const favorites: FirebaseProperty[] = [];
+      
+      // For each favorite ID, fetch the property
+      for (const id of favoriteIds) {
+        const property = await getPropertyById(id);
+        if (property) {
+          favorites.push(property);
+        }
+      }
+      
+      return favorites;
+    } catch (error) {
+      console.error('Error fetching user favorites:', error);
+      return [];
+    }
+  };
+  
+  // Function to add a property to favorites
+  const addToFavorites = async (userId: string, propertyId: string): Promise<void> => {
+    try {
+      const userFavoritesRef = doc(db, 'userFavorites', userId);
+      const userFavoritesSnap = await getDoc(userFavoritesRef);
+      
+      if (!userFavoritesSnap.exists()) {
+        // Create new favorites document for user
+        await setDoc(userFavoritesRef, {
+          propertyIds: [propertyId],
+          userId,
+          updatedAt: new Date().toISOString(),
+        });
+      } else {
+        // Update existing favorites
+        const favoritesData = userFavoritesSnap.data();
+        const favoriteIds = favoritesData.propertyIds || [];
+        
+        // Only add if not already in favorites
+        if (!favoriteIds.includes(propertyId)) {
+          await setDoc(userFavoritesRef, {
+            propertyIds: [...favoriteIds, propertyId],
+            userId,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error adding to favorites:', error);
+      throw error;
+    }
+  };
+  
+  // Function to remove a property from favorites
+  const removeFromFavorites = async (userId: string, propertyId: string): Promise<void> => {
+    try {
+      const userFavoritesRef = doc(db, 'userFavorites', userId);
+      const userFavoritesSnap = await getDoc(userFavoritesRef);
+      
+      if (userFavoritesSnap.exists()) {
+        const favoritesData = userFavoritesSnap.data();
+        const favoriteIds = favoritesData.propertyIds || [];
+        
+        // Filter out the property ID
+        const updatedFavoriteIds = favoriteIds.filter((id: string) => id !== propertyId);
+        
+        await setDoc(userFavoritesRef, {
+          propertyIds: updatedFavoriteIds,
+          userId,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      console.error('Error removing from favorites:', error);
+      throw error;
+    }
+  };
+  
   return (
-    <FirebaseContext.Provider value={{ getProperties, getPropertyById }}>
+    <FirebaseContext.Provider value={{ 
+      getProperties, 
+      getPropertyById, 
+      auth,
+      getUserFavorites,
+      addToFavorites,
+      removeFromFavorites
+    }}>
       {children}
     </FirebaseContext.Provider>
   );

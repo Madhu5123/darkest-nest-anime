@@ -53,6 +53,29 @@ const servicesItems = [
   }
 ];
 
+const userItems = [
+  {
+    title: "My Profile",
+    href: "/profile",
+    description: "Manage your account settings and preferences."
+  },
+  {
+    title: "My Favorites",
+    href: "/favorites",
+    description: "View and manage your saved properties."
+  },
+  {
+    title: "Login",
+    href: "/login",
+    description: "Sign in to your LuxEstate account."
+  },
+  {
+    title: "Register",
+    href: "/register",
+    description: "Create a new account to access premium features."
+  }
+];
+
 export const DesktopNavigation = () => {
   return (
     <NavigationMenu className="hidden md:flex">
@@ -113,6 +136,23 @@ export const DesktopNavigation = () => {
               Contact
             </NavigationMenuLink>
           </Link>
+        </NavigationMenuItem>
+        
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Account</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+              {userItems.map((item) => (
+                <ListItem
+                  key={item.title}
+                  title={item.title}
+                  href={item.href}
+                >
+                  {item.description}
+                </ListItem>
+              ))}
+            </ul>
+          </NavigationMenuContent>
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
