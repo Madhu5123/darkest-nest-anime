@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode } from 'react';
-import { db, storage, auth } from '@/lib/firebase';
+import { db, storage, auth, rtdb } from '@/lib/firebase';
 import { 
   collection, 
   getDocs, 
@@ -14,11 +14,13 @@ import {
   DocumentData,
   QueryConstraint
 } from 'firebase/firestore';
+import { ref, get, query as rtdbQuery, orderByChild, startAt, endAt, limitToFirst } from 'firebase/database';
 import { FirebaseProperty, FirebasePropertyFilter } from '@/types';
 
 type FirebaseContextType = {
   getProperties: (filters?: FirebasePropertyFilter) => Promise<FirebaseProperty[]>;
   getPropertyById: (id: string) => Promise<FirebaseProperty | null>;
+  getLandsFromRealtime: (searchQuery?: string, limit?: number) => Promise<FirebaseProperty[]>;
   auth: typeof auth;
   getUserFavorites: (userId: string) => Promise<FirebaseProperty[]>;
   addToFavorites: (userId: string, propertyId: string) => Promise<void>;
@@ -34,21 +36,15 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
       const propertiesRef = collection(db, 'properties');
       const constraints: QueryConstraint[] = [];
       
-      // Apply filters if provided
       if (filters) {
-        // Add search filter (name or description)
         if (filters.search) {
-          // Firebase doesn't support OR queries directly, so we'd need to use composite indexing
-          // or make multiple queries in a real app
           constraints.push(where('name', '>=', filters.search));
         }
         
-        // Add location filter
         if (filters.location) {
           constraints.push(where('location.city', '==', filters.location));
         }
         
-        // Add price range filters
         if (filters.minPrice) {
           constraints.push(where('price', '>=', filters.minPrice));
         }
@@ -57,20 +53,16 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
           constraints.push(where('price', '<=', filters.maxPrice));
         }
         
-        // Add property type filter
         if (filters.propertyType) {
           constraints.push(where('propertyType', '==', filters.propertyType));
         }
       }
       
-      // Add default ordering
       constraints.push(orderBy('uploaded_at', 'desc'));
       
-      // Execute query
       const q = query(propertiesRef, ...constraints);
       const querySnapshot = await getDocs(q);
       
-      // Process results
       const properties: FirebaseProperty[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data() as DocumentData;
@@ -124,10 +116,58 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
+  // Function to get lands from Firebase Realtime Database
+  const getLandsFromRealtime = async (searchQuery?: string, resultLimit: number = 3): Promise<FirebaseProperty[]> => {
+    try {
+      const landsRef = ref(rtdb, 'lands');
+      let landsQuery;
+      
+      if (searchQuery) {
+        landsQuery = rtdbQuery(
+          landsRef,
+          orderByChild('name'),
+          startAt(searchQuery),
+          endAt(searchQuery + '\uf8ff'),
+          limitToFirst(resultLimit)
+        );
+      } else {
+        landsQuery = rtdbQuery(
+          landsRef,
+          limitToFirst(resultLimit)
+        );
+      }
+      
+      const snapshot = await get(landsQuery);
+      const lands: FirebaseProperty[] = [];
+      
+      if (snapshot.exists()) {
+        snapshot.forEach((childSnapshot) => {
+          const land = childSnapshot.val();
+          lands.push({
+            id: childSnapshot.key || '',
+            name: land.name || '',
+            description: land.description || '',
+            price: land.price || '0',
+            image_urls: land.image_urls || [],
+            location: land.location || { latitude: 0, longitude: 0 },
+            area_points: land.area_points || [],
+            email: land.email || '',
+            phone: land.phone || '',
+            uploaded_at: land.uploaded_at || new Date().toISOString(),
+          });
+        });
+      }
+      
+      return lands;
+    } catch (error) {
+      console.error('Error fetching lands from Realtime Database:', error);
+      return [];
+    }
+  };
+  
   // Function to get a user's favorite properties
   const getUserFavorites = async (userId: string): Promise<FirebaseProperty[]> => {
     try {
-      // Get user favorites document
       const userFavoritesRef = doc(db, 'userFavorites', userId);
       const userFavoritesSnap = await getDoc(userFavoritesRef);
       
@@ -142,10 +182,8 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
         return [];
       }
       
-      // Fetch all favorite properties
       const favorites: FirebaseProperty[] = [];
       
-      // For each favorite ID, fetch the property
       for (const id of favoriteIds) {
         const property = await getPropertyById(id);
         if (property) {
@@ -167,18 +205,15 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
       const userFavoritesSnap = await getDoc(userFavoritesRef);
       
       if (!userFavoritesSnap.exists()) {
-        // Create new favorites document for user
         await setDoc(userFavoritesRef, {
           propertyIds: [propertyId],
           userId,
           updatedAt: new Date().toISOString(),
         });
       } else {
-        // Update existing favorites
         const favoritesData = userFavoritesSnap.data();
         const favoriteIds = favoritesData.propertyIds || [];
         
-        // Only add if not already in favorites
         if (!favoriteIds.includes(propertyId)) {
           await setDoc(userFavoritesRef, {
             propertyIds: [...favoriteIds, propertyId],
@@ -203,7 +238,6 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
         const favoritesData = userFavoritesSnap.data();
         const favoriteIds = favoritesData.propertyIds || [];
         
-        // Filter out the property ID
         const updatedFavoriteIds = favoriteIds.filter((id: string) => id !== propertyId);
         
         await setDoc(userFavoritesRef, {
@@ -222,6 +256,7 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
     <FirebaseContext.Provider value={{ 
       getProperties, 
       getPropertyById, 
+      getLandsFromRealtime,
       auth,
       getUserFavorites,
       addToFavorites,

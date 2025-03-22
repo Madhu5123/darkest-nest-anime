@@ -1,10 +1,8 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Mic, MicOff, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Tooltip } from '@/components/ui/tooltip';
 import { useFirebase } from '@/contexts/FirebaseContext';
 import { Property } from '@/types';
 import PropertyCard from './PropertyCard';
@@ -31,7 +29,7 @@ const Chatbot = () => {
   const [isListening, setIsListening] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const { getProperties } = useFirebase();
+  const { getProperties, getLandsFromRealtime } = useFirebase();
   const { toast } = useToast();
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -111,7 +109,6 @@ const Chatbot = () => {
   };
   
   const simulateTyping = (text: string, properties?: Property[]) => {
-    // Add a typing indicator message
     const typingId = Date.now().toString();
     setIsTyping(true);
     setMessages(prev => [...prev, { 
@@ -121,11 +118,9 @@ const Chatbot = () => {
       isTyping: true
     }]);
     
-    // Calculate a dynamic typing duration based on message length
     const wordCount = text.split(' ').length;
-    const typingDuration = Math.min(Math.max(wordCount * 50, 500), 2000); // Between 500ms and 2000ms
+    const typingDuration = Math.min(Math.max(wordCount * 50, 500), 2000);
     
-    // Remove the typing indicator and add the actual message after the delay
     typingTimerRef.current = setTimeout(() => {
       setMessages(prev => prev.filter(msg => msg.id !== typingId));
       setMessages(prev => [...prev, { 
@@ -141,7 +136,6 @@ const Chatbot = () => {
   const handleSend = async (text: string = inputValue) => {
     if (!text.trim()) return;
 
-    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       text,
@@ -151,13 +145,83 @@ const Chatbot = () => {
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
 
-    // Process the query
     const lowerCaseText = text.toLowerCase();
     
-    // Property-related queries
     if (
-      lowerCaseText.includes('property') || 
       lowerCaseText.includes('land') || 
+      lowerCaseText.includes('plot') || 
+      lowerCaseText.includes('acre') ||
+      lowerCaseText.includes('property') && lowerCaseText.includes('vacant')
+    ) {
+      try {
+        let searchQuery = '';
+        const locationMatch = text.match(/in\s+([a-zA-Z\s]+)/i);
+        if (locationMatch && locationMatch[1]) {
+          searchQuery = locationMatch[1].trim();
+        }
+
+        const lands = await getLandsFromRealtime(searchQuery);
+        
+        if (lands.length > 0) {
+          let responseText = '';
+          
+          if (searchQuery) {
+            responseText = `I found ${lands.length} land ${lands.length === 1 ? 'property' : 'properties'} in ${searchQuery} that might interest you! `;
+          } else {
+            responseText = `I found ${lands.length} land ${lands.length === 1 ? 'property' : 'properties'} that might match what you're looking for! `;
+          }
+          
+          const priceMatch = text.match(/under\s+\$?(\d+[k|K|m|M]?)/);
+          if (priceMatch && priceMatch[1]) {
+            responseText += `I've selected options within your budget. `;
+          }
+          
+          responseText += `Here ${lands.length === 1 ? 'is' : 'are'} some land ${lands.length === 1 ? 'option' : 'options'} I think you'll love:`;
+          
+          const transformedProperties: Property[] = lands.map(p => ({
+            id: p.id,
+            title: p.name,
+            description: p.description,
+            price: parseInt(p.price),
+            images: p.image_urls,
+            beds: 0,
+            baths: 0,
+            area: 5000,
+            location: {
+              address: "Land Address",
+              city: "Land City",
+              state: "Land State",
+              zip: "12345",
+              coordinates: p.location ? {
+                lat: p.location.latitude,
+                lng: p.location.longitude
+              } : undefined
+            },
+            status: 'For Sale',
+            propertyType: 'Land',
+            yearBuilt: new Date().getFullYear(),
+            features: ['Vacant Land', 'Investment Opportunity'],
+          }));
+          
+          simulateTyping(responseText, transformedProperties);
+        } else {
+          let noResultsText = "I couldn't find any land properties that match your criteria in our database. ";
+          
+          if (searchQuery) {
+            noResultsText += `We don't currently have land listings in ${searchQuery}. `;
+          }
+          
+          noResultsText += "Would you like to explore other locations or property types instead?";
+          
+          simulateTyping(noResultsText);
+        }
+      } catch (error) {
+        console.error('Error fetching lands:', error);
+        simulateTyping("I apologize, but I encountered an issue while searching for land properties. Could we try again in a moment?");
+      }
+    } 
+    else if (
+      lowerCaseText.includes('property') || 
       lowerCaseText.includes('house') || 
       lowerCaseText.includes('apartment') ||
       lowerCaseText.includes('recommend') ||
@@ -165,25 +229,19 @@ const Chatbot = () => {
       lowerCaseText.includes('show me')
     ) {
       try {
-        // Extract filters from the message
         const filters: any = {};
         
-        // Property type filter
         if (lowerCaseText.includes('house')) {
           filters.propertyType = 'House';
         } else if (lowerCaseText.includes('apartment')) {
           filters.propertyType = 'Apartment';
-        } else if (lowerCaseText.includes('land')) {
-          filters.propertyType = 'Land';
         }
 
-        // Location filter
         const locationMatch = text.match(/in\s+([a-zA-Z\s]+)/i);
         if (locationMatch && locationMatch[1]) {
           filters.location = locationMatch[1].trim();
         }
 
-        // Price range filter
         const priceMatch = text.match(/under\s+\$?(\d+[k|K|m|M]?)/);
         if (priceMatch && priceMatch[1]) {
           let price = priceMatch[1];
@@ -202,7 +260,7 @@ const Chatbot = () => {
           description: p.description,
           price: parseInt(p.price),
           images: p.image_urls,
-          beds: 3, // Default values
+          beds: 3,
           baths: 2,
           area: 1500,
           location: {
@@ -216,28 +274,24 @@ const Chatbot = () => {
             }
           },
           status: 'For Sale',
-          propertyType: 'Land',
+          propertyType: 'House',
           yearBuilt: 2022,
           features: ['Sample Feature 1', 'Sample Feature 2'],
         }));
 
         if (properties.length > 0) {
-          // Create natural language response based on the query and filter results
           let responseText = '';
           
-          // Check what kind of properties were requested
           if (filters.propertyType) {
             responseText = `I found ${properties.length} ${filters.propertyType.toLowerCase()} properties that might interest you! `;
           } else {
             responseText = `I found ${properties.length} properties that might match what you're looking for! `;
           }
           
-          // Add location information if specified
           if (filters.location) {
             responseText += `They're located in ${filters.location} as requested. `;
           }
           
-          // Add price information if specified
           if (filters.maxPrice) {
             responseText += `All within your budget of $${parseInt(filters.maxPrice).toLocaleString()}. `;
           }
@@ -261,25 +315,20 @@ const Chatbot = () => {
         simulateTyping("I apologize, but I encountered an issue while searching for properties. Could we try again in a moment?");
       }
     } 
-    // Price inquiries
     else if (lowerCaseText.includes('price') || lowerCaseText.includes('cost') || lowerCaseText.includes('expensive')) {
-      simulateTyping("Our properties range from $200,000 for starter homes to $5,000,000 for luxury estates. The price varies based on location, size, and amenities. What's your budget range? I'd be happy to find properties that fit within it.");
+      simulateTyping("Our properties range from $200,000 for starter homes to $5,000,000 for luxury estates. Land properties typically start at $50,000 for small plots. The price varies based on location, size, and amenities. What's your budget range? I'd be happy to find properties that fit within it.");
     } 
-    // Location inquiries
     else if (lowerCaseText.includes('location') || lowerCaseText.includes('where') || lowerCaseText.includes('area')) {
-      simulateTyping("We have properties in various premium locations across the country, including beachfront properties, urban apartments, and countryside estates. Is there a particular area you're interested in exploring?");
+      simulateTyping("We have properties in various premium locations across the country, including beachfront properties, urban apartments, countryside estates, and vacant land plots. Is there a particular area you're interested in exploring?");
     } 
-    // Contact inquiries
     else if (lowerCaseText.includes('contact') || lowerCaseText.includes('speak') || lowerCaseText.includes('agent') || lowerCaseText.includes('call')) {
-      simulateTyping("You can reach our team at (555) 123-4567 or visit our Contact page. Our agents are available Monday to Friday from 9 AM to 6 PM. Would you like me to help schedule a call with one of our agents?");
+      simulateTyping("You can reach our team at (555) 123-4567 or visit our Contact page. Our agents are available Monday to Friday from 9 AM to 6 PM. Would you like me to help schedule a call with one of our land specialists?");
     } 
-    // Greetings
     else if (lowerCaseText.includes('hello') || lowerCaseText.includes('hi') || lowerCaseText.match(/^hey/)) {
-      simulateTyping("Hi there! I'm your personal real estate assistant. I can help you find properties, answer questions about pricing or locations, or connect you with our team. What can I assist you with today?");
+      simulateTyping("Hi there! I'm your personal real estate assistant. I can help you find properties including land, answer questions about pricing or locations, or connect you with our team. What can I assist you with today?");
     }
-    // Default response for other queries
     else {
-      simulateTyping("I'd be happy to help with your real estate needs. Are you looking for property recommendations, information about pricing, or details about specific locations? Feel free to ask anything about our properties and services.");
+      simulateTyping("I'd be happy to help with your real estate needs. Are you looking for property recommendations, information about land plots, details about pricing, or specific locations? Feel free to ask anything about our properties and services.");
     }
   };
 
