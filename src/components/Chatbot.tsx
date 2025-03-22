@@ -15,6 +15,7 @@ interface Message {
   text: string;
   sender: 'user' | 'bot';
   properties?: Property[];
+  isTyping?: boolean;
 }
 
 const Chatbot = () => {
@@ -28,9 +29,11 @@ const Chatbot = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const { getProperties } = useFirebase();
   const { toast } = useToast();
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // For speech recognition
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -77,6 +80,10 @@ const Chatbot = () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort();
       }
+      
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current);
+      }
     };
   }, [toast]);
 
@@ -102,6 +109,34 @@ const Chatbot = () => {
   const toggleChat = () => {
     setIsOpen(!isOpen);
   };
+  
+  const simulateTyping = (text: string, properties?: Property[]) => {
+    // Add a typing indicator message
+    const typingId = Date.now().toString();
+    setIsTyping(true);
+    setMessages(prev => [...prev, { 
+      id: typingId,
+      text: '...',
+      sender: 'bot',
+      isTyping: true
+    }]);
+    
+    // Calculate a dynamic typing duration based on message length
+    const wordCount = text.split(' ').length;
+    const typingDuration = Math.min(Math.max(wordCount * 50, 500), 2000); // Between 500ms and 2000ms
+    
+    // Remove the typing indicator and add the actual message after the delay
+    typingTimerRef.current = setTimeout(() => {
+      setMessages(prev => prev.filter(msg => msg.id !== typingId));
+      setMessages(prev => [...prev, { 
+        id: (Date.now() + 1).toString(),
+        text,
+        sender: 'bot',
+        properties
+      }]);
+      setIsTyping(false);
+    }, typingDuration);
+  };
 
   const handleSend = async (text: string = inputValue) => {
     if (!text.trim()) return;
@@ -116,27 +151,24 @@ const Chatbot = () => {
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
 
-    // Start preparing the bot response
+    // Process the query
     const lowerCaseText = text.toLowerCase();
-    let botResponse: Message = {
-      id: (Date.now() + 1).toString(),
-      text: '',
-      sender: 'bot',
-    };
-
-    // Check if the message is about property recommendations
+    
+    // Property-related queries
     if (
-      lowerCaseText.includes('suggest') || 
+      lowerCaseText.includes('property') || 
+      lowerCaseText.includes('land') || 
+      lowerCaseText.includes('house') || 
+      lowerCaseText.includes('apartment') ||
       lowerCaseText.includes('recommend') ||
-      lowerCaseText.includes('good property') ||
-      lowerCaseText.includes('good land') ||
-      lowerCaseText.includes('show me property') ||
-      lowerCaseText.includes('find property')
+      lowerCaseText.includes('suggest') ||
+      lowerCaseText.includes('show me')
     ) {
       try {
-        // Get properties based on any filters detected in the message
+        // Extract filters from the message
         const filters: any = {};
         
+        // Property type filter
         if (lowerCaseText.includes('house')) {
           filters.propertyType = 'House';
         } else if (lowerCaseText.includes('apartment')) {
@@ -190,63 +222,65 @@ const Chatbot = () => {
         }));
 
         if (properties.length > 0) {
-          botResponse = {
-            id: (Date.now() + 1).toString(),
-            text: `Here are some properties you might be interested in:`,
-            sender: 'bot',
-            properties: transformedProperties.slice(0, 3) // Limit to 3 properties
-          };
+          // Create natural language response based on the query and filter results
+          let responseText = '';
+          
+          // Check what kind of properties were requested
+          if (filters.propertyType) {
+            responseText = `I found ${properties.length} ${filters.propertyType.toLowerCase()} properties that might interest you! `;
+          } else {
+            responseText = `I found ${properties.length} properties that might match what you're looking for! `;
+          }
+          
+          // Add location information if specified
+          if (filters.location) {
+            responseText += `They're located in ${filters.location} as requested. `;
+          }
+          
+          // Add price information if specified
+          if (filters.maxPrice) {
+            responseText += `All within your budget of $${parseInt(filters.maxPrice).toLocaleString()}. `;
+          }
+          
+          responseText += `Here are some options I think you'll love:`;
+          
+          simulateTyping(responseText, transformedProperties.slice(0, 3));
         } else {
-          botResponse = {
-            id: (Date.now() + 1).toString(),
-            text: `I couldn't find any properties matching your criteria. Would you like to try a different search?`,
-            sender: 'bot',
-          };
+          let noResultsText = "I couldn't find any properties that match exactly what you're looking for. ";
+          
+          if (Object.keys(filters).length > 0) {
+            noResultsText += "Would you like to try a broader search? Perhaps with a different location or price range?";
+          } else {
+            noResultsText += "Could you provide more details about what you're looking for, such as location, price range, or property type?";
+          }
+          
+          simulateTyping(noResultsText);
         }
       } catch (error) {
         console.error('Error fetching properties:', error);
-        botResponse = {
-          id: (Date.now() + 1).toString(),
-          text: `I'm sorry, I encountered an error while searching for properties. Please try again later.`,
-          sender: 'bot',
-        };
+        simulateTyping("I apologize, but I encountered an issue while searching for properties. Could we try again in a moment?");
       }
-    } else if (lowerCaseText.includes('price') || lowerCaseText.includes('cost')) {
-      botResponse = {
-        id: (Date.now() + 1).toString(),
-        text: `Our properties range from $200,000 to $5,000,000 depending on location, size, and amenities. You can use our search filters on the Properties page to find options within your budget.`,
-        sender: 'bot',
-      };
-    } else if (lowerCaseText.includes('location') || lowerCaseText.includes('where')) {
-      botResponse = {
-        id: (Date.now() + 1).toString(),
-        text: `We have properties in various premium locations across the country. You can view all available locations on our Properties page.`,
-        sender: 'bot',
-      };
-    } else if (lowerCaseText.includes('contact') || lowerCaseText.includes('speak')) {
-      botResponse = {
-        id: (Date.now() + 1).toString(),
-        text: `You can contact our team via the Contact page or call us at (555) 123-4567. Our agents are available Monday to Friday from 9 AM to 6 PM.`,
-        sender: 'bot',
-      };
-    } else if (lowerCaseText.includes('hello') || lowerCaseText.includes('hi')) {
-      botResponse = {
-        id: (Date.now() + 1).toString(),
-        text: `Hello! How can I assist you with your real estate inquiries today?`,
-        sender: 'bot',
-      };
-    } else {
-      botResponse = {
-        id: (Date.now() + 1).toString(),
-        text: `I'm not sure I understand. Are you looking for property recommendations, pricing information, or something else? Feel free to ask about our properties, locations, or services.`,
-        sender: 'bot',
-      };
+    } 
+    // Price inquiries
+    else if (lowerCaseText.includes('price') || lowerCaseText.includes('cost') || lowerCaseText.includes('expensive')) {
+      simulateTyping("Our properties range from $200,000 for starter homes to $5,000,000 for luxury estates. The price varies based on location, size, and amenities. What's your budget range? I'd be happy to find properties that fit within it.");
+    } 
+    // Location inquiries
+    else if (lowerCaseText.includes('location') || lowerCaseText.includes('where') || lowerCaseText.includes('area')) {
+      simulateTyping("We have properties in various premium locations across the country, including beachfront properties, urban apartments, and countryside estates. Is there a particular area you're interested in exploring?");
+    } 
+    // Contact inquiries
+    else if (lowerCaseText.includes('contact') || lowerCaseText.includes('speak') || lowerCaseText.includes('agent') || lowerCaseText.includes('call')) {
+      simulateTyping("You can reach our team at (555) 123-4567 or visit our Contact page. Our agents are available Monday to Friday from 9 AM to 6 PM. Would you like me to help schedule a call with one of our agents?");
+    } 
+    // Greetings
+    else if (lowerCaseText.includes('hello') || lowerCaseText.includes('hi') || lowerCaseText.match(/^hey/)) {
+      simulateTyping("Hi there! I'm your personal real estate assistant. I can help you find properties, answer questions about pricing or locations, or connect you with our team. What can I assist you with today?");
     }
-
-    // Add bot response after a short delay to simulate thinking
-    setTimeout(() => {
-      setMessages((prev) => [...prev, botResponse]);
-    }, 800);
+    // Default response for other queries
+    else {
+      simulateTyping("I'd be happy to help with your real estate needs. Are you looking for property recommendations, information about pricing, or details about specific locations? Feel free to ask anything about our properties and services.");
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -301,15 +335,25 @@ const Chatbot = () => {
                       : 'bg-gray-800 text-white/90'
                   }`}
                 >
-                  <p>{message.text}</p>
-                  {message.properties && message.properties.length > 0 && (
-                    <div className="mt-3 space-y-3">
-                      {message.properties.map((property) => (
-                        <div key={property.id} className="rounded-lg overflow-hidden bg-gray-700 p-2">
-                          <PropertyCard property={property} index={0} />
-                        </div>
-                      ))}
+                  {message.isTyping ? (
+                    <div className="flex space-x-1 items-center">
+                      <span className="w-2 h-2 rounded-full bg-white/70 animate-pulse" style={{ animationDelay: '0ms' }}></span>
+                      <span className="w-2 h-2 rounded-full bg-white/70 animate-pulse" style={{ animationDelay: '300ms' }}></span>
+                      <span className="w-2 h-2 rounded-full bg-white/70 animate-pulse" style={{ animationDelay: '600ms' }}></span>
                     </div>
+                  ) : (
+                    <>
+                      <p>{message.text}</p>
+                      {message.properties && message.properties.length > 0 && (
+                        <div className="mt-3 space-y-3">
+                          {message.properties.map((property) => (
+                            <div key={property.id} className="rounded-lg overflow-hidden bg-gray-700 p-2">
+                              <PropertyCard property={property} index={0} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -328,18 +372,21 @@ const Chatbot = () => {
               onKeyDown={handleKeyDown}
               placeholder="Type your question..."
               className="flex-1 bg-gray-700 border-gray-700 text-white placeholder-gray-400"
+              disabled={isTyping}
             />
             <Button 
               size="icon"
               onClick={toggleListening}
               variant="ghost"
               className="text-white hover:bg-gray-700"
+              disabled={isTyping}
             >
               {isListening ? <MicOff size={18} /> : <Mic size={18} />}
             </Button>
             <Button
               onClick={() => handleSend()}
               className="bg-indigo-600 hover:bg-indigo-700"
+              disabled={isTyping || !inputValue.trim()}
             >
               Send
             </Button>
